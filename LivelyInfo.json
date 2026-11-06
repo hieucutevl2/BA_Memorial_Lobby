@@ -1,0 +1,10 @@
+{
+  "AppVersion": "1.0.0.0",
+  "Title": "Blue Archive Memorial Lobby",
+  "Desc": "Interactive Blue Archive Recollection Lobby for Lively Wallpaper",
+  "Author": "hieucutevl",
+  "License": "MIT",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": "--pause-event true"
+}

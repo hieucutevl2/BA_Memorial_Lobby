@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>Blue Archive Recollection Lobby - Lively Wallpaper</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050505;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: inherit;
+    }
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.15rem;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+      background: rgba(15, 17, 23, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 24px;
+      border-radius: 10px;
+      z-index: 50;
+    }
+
+    /* Floating Controls - Right Center */
+    .top-controls {
+      position: absolute;
+      top: 50%;
+      right: 18px;
+      left: auto;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      padding: 6px;
+    }
+    .control-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(18, 20, 28, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+    .control-btn .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .top-controls:hover #menu-btn .btn-icon,
+    #menu-btn:hover .btn-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Board button slides UP from menu button */
+    #board-btn {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(54px) scale(0.6);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.25s ease,
+                  background 0.2s ease,
+                  border-color 0.2s ease,
+                  box-shadow 0.2s ease;
+      z-index: 1;
+    }
+    .top-controls:hover #board-btn,
+    .top-controls:focus-within #board-btn {
+      opacity: 0.85;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .top-controls:hover #board-btn:hover {
+      opacity: 1;
+      transform: translateY(0) scale(1.08);
+      background: rgba(24, 27, 38, 0.95);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    #menu-btn {
+      opacity: 0.4;
+      z-index: 2;
+    }
+    .top-controls:hover #menu-btn {
+      opacity: 0.85;
+    }
+    #menu-btn:hover {
+      opacity: 1;
+      transform: scale(1.08);
+      background: rgba(24, 27, 38, 0.95);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Settings Popup Modal (Adjacent to right center controls) */
+    #menu-modal {
+      position: absolute;
+      top: 50%;
+      right: 74px;
+      left: auto;
+      transform: translateY(-50%);
+      width: 250px;
+      background: rgba(18, 20, 28, 0.92);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+      color: #f0f0f5;
+      z-index: 101;
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #menu-modal.hidden {
+      opacity: 0;
+      transform: translateY(-50%) translateX(10px) scale(0.96);
+      pointer-events: none;
+    }
+    .menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+    .menu-header h3 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .close-btn:hover {
+      color: #fff;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    label {
+      display: block;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 6px;
+    }
+    .segmented-control {
+      display: flex;
+      background: rgba(26, 30, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .segment-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 10px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+      user-select: none;
+    }
+    .segment-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .segment-btn.active {
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
+    .primary-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 8px 14px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .primary-btn:hover {
+      background: #1d4ed8;
+    }
+    .primary-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Student Board Modal */
+    #board-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+    }
+    #board-modal.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .board-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(10px);
+    }
+    .board-container {
+      position: relative;
+      width: min(94vw, 1140px);
+      max-height: 86vh;
+      background: rgba(18, 21, 30, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(1);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #board-modal.hidden .board-container {
+      transform: scale(0.96);
+    }
+    .board-top-bar {
+      height: 38px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(24, 28, 40, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .board-top-label {
+      font-size: 0.74rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    #close-board-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.15s ease;
+    }
+    #close-board-btn:hover {
+      color: #fff;
+    }
+    .board-grid-wrap {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 5px;
+      padding: 12px 16px 16px 16px;
+    }
+    .student-card {
+      position: relative;
+      background: rgba(24, 28, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 0 8px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    .student-card:hover {
+      transform: translateY(-1px);
+      background: rgba(38, 45, 66, 0.95);
+      border-color: rgba(59, 130, 246, 0.55);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .student-card.active {
+      border-color: #3b82f6;
+      background: rgba(37, 99, 235, 0.25);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+    }
+    .card-name {
+      font-size: 0.81rem;
+      font-weight: 500;
+      color: #f1f5f9;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .card-end {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .alt-arrow {
+      font-size: 0.65rem;
+      line-height: 1;
+      color: rgba(125, 211, 252, 0.75);
+      flex-shrink: 0;
+      transition: transform 0.15s ease, color 0.15s ease;
+    }
+    .student-card:hover .alt-arrow {
+      color: #7dd3fc;
+    }
+    .student-card.alt-open .alt-arrow {
+      transform: rotate(180deg);
+      color: #38bdf8;
+    }
+    .card-check {
+      color: #38bdf8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .student-card.alt-open {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.18);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    /* Anchored Alt Dropdown Menu */
+    .alt-dropdown {
+      position: absolute;
+      z-index: 100;
+      min-width: 130px;
+      max-width: 220px;
+      background: rgba(16, 20, 30, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 14px rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: opacity 0.14s ease, transform 0.14s ease;
+    }
+    .alt-dropdown.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-4px);
+    }
+    .alt-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 5px;
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .alt-dropdown-item:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: #fff;
+    }
+    .alt-dropdown-item.active {
+      background: rgba(37, 99, 235, 0.28);
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .alt-dropdown-item .alt-check {
+      color: #38bdf8;
+      font-size: 0.78rem;
+      margin-left: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="loading">Loading Memorial Lobby...</div>
+
+  <!-- Standalone Floating Controls -->
+  <div class="top-controls">
+    <button id="board-btn" class="control-btn" title="Open Student Board"><span class="btn-icon">👥</span></button>
+    <button id="menu-btn" class="control-btn" title="Recollection Lobby Settings"><span class="btn-icon">⚙</span></button>
+  </div>
+
+  <!-- Settings Popup Modal -->
+  <div id="menu-modal" class="hidden">
+    <div class="menu-header">
+      <h3>Settings</h3>
+      <button class="close-btn" id="close-menu-btn">&times;</button>
+    </div>
+
+    <div class="form-group">
+      <label>Interaction</label>
+      <div class="segmented-control" id="interaction-control">
+        <button type="button" class="segment-btn active" data-value="enabled">Enabled</button>
+        <button type="button" class="segment-btn" data-value="disabled">Disabled</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Frame Rate</label>
+      <div class="segmented-control" id="fps-control">
+        <button type="button" class="segment-btn active" data-value="60">60 FPS</button>
+        <button type="button" class="segment-btn" data-value="30">30 FPS</button>
+        <button type="button" class="segment-btn" data-value="24">24 FPS</button>
+      </div>
+    </div>
+
+    <button type="button" id="apply-btn" class="primary-btn">Apply</button>
+  </div>
+
+  <!-- Student Selection Board Modal -->
+  <div id="board-modal" class="hidden">
+    <div class="board-backdrop" id="board-backdrop"></div>
+    <div class="board-container">
+      <div class="board-top-bar">
+        <span class="board-top-label">Recollection Lobby</span>
+        <button class="close-btn" id="close-board-btn" title="Close (Esc)">&times;</button>
+      </div>
+      <div class="board-grid-wrap">
+        <div class="board-grid" id="board-grid"></div>
+      </div>
+
+      <!-- Anchored Alt Dropdown Menu -->
+      <div id="alt-dropdown" class="alt-dropdown hidden"></div>
+    </div>
+  </div>
+
+  <!-- Pre-bundled PixiJS and Spine Runtimes -->
+  <script src="vendor/pixi.min.js"></script>
+  <script src="vendor/spine-pixi-v7.min.js"></script>
+
+  <!-- Interactive Wallpaper Engine & Student Dataset -->
+  <script src="js/students.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

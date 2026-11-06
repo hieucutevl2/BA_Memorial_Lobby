@@ -1,0 +1,39 @@
+{
+  "studentId": {
+    "type": "dropdown",
+    "value": 0,
+    "items": [
+      "aru",
+      "hina",
+      "shiroko",
+      "yuuka",
+      "hoshino",
+      "mika"
+    ],
+    "text": "Student"
+  },
+  "customStudentId": {
+    "type": "textbox",
+    "value": "",
+    "text": "Custom Student ID (Overrides Dropdown)"
+  },
+  "fpsLimit": {
+    "type": "dropdown",
+    "value": 1,
+    "items": [
+      "30 FPS (Power Saver)",
+      "60 FPS (Smooth)"
+    ],
+    "text": "Target FPS"
+  },
+  "enableLook": {
+    "type": "checkbox",
+    "value": true,
+    "text": "Eye Tracking (Follow Cursor)"
+  },
+  "enablePat": {
+    "type": "checkbox",
+    "value": true,
+    "text": "Headpat & Touch Interactions"
+  }
+}
