@@ -1,32 +1,49 @@
-# Blue Archive Memorial Lobby (Recollection Lobby)
+# Blue Archive Memorial Lobby Wallpaper
 
-Interactive 2D live wallpaper featuring over 280+ Blue Archive students and variants, built with PixiJS and Spine WebGL. Designed for [Lively Wallpaper](https://www.rocksdanister.com/lively/) on Windows and modern web browsers.
+[![English](https://img.shields.io/badge/README-English-blue?style=for-the-badge)](README.md)
+[![Tiếng Việt](https://img.shields.io/badge/README-Ti%E1%BA%BFng_Vi%E1%BB%87t-yellow?style=for-the-badge)](README.vi.md)
 
-## ✨ Features
+[Live Demo](https://hieucutevl.xyz)
 
-- **Spine 2D WebGL Engine**: Hardware-accelerated skeletal animation powered by PixiJS and Spine-Pixi v7.
-- **Interactive Gaze & Headpat**:
-  - Hold and drag mouse to have character steer gaze and head towards your cursor.
-  - Headpat, cheek pull, and body touch reactions with expressive facial animations.
-- **280+ Students & Alts**: Complete searchable in-wallpaper Student Selection Board with real-time switching.
-- **Lively Wallpaper IPC Integration**:
-  - Change student, target FPS (30 / 60 FPS), or toggle eye tracking and touch directly from the Windows tray Customize panel.
-  - Automatic Power Saver: Suspends rendering when a full-screen game or window is active to save CPU/GPU.
-- **Responsive Screen Cover**: Scales seamlessly for 16:9, 16:10, and 21:9 ultrawide monitors without distortion.
-- **Pure Static Architecture**: Runs completely in the browser with zero backend requirements.
+Interactive 2D live wallpaper featuring over 280 Blue Archive students and variants. Built with PixiJS and Spine WebGL for Lively Wallpaper on Windows and modern web browsers.
 
----
+## Features
 
-## 🚀 How to Install & Run
+- **Spine WebGL Animation**: Hardware-accelerated skeletal animation powered by PixiJS and Spine-Pixi v7.
+- **Interactive Gaze and Touch**: Hold and drag to steer gaze; click for headpats, cheek pulls, and reaction animations.
+- **280+ Students and Variants**: Searchable in-wallpaper student selector with instant live switching.
+- **Dual Lively Wallpaper Support**: Run as a zero-install web URL or as a local package with native Windows tray controls.
+- **Automatic Power Saver**: Suspends rendering when full-screen apps or games run to conserve CPU and GPU.
+- **Responsive Scaling**: Adapts to 16:9, 16:10, and 21:9 ultrawide displays without distortion.
+- **Pure Static Architecture**: Runs completely client-side. No build steps, dependencies, or backend servers required.
 
-### 1. In Lively Wallpaper (Windows)
+## Installation and Usage
+
+### Method 1: Instant URL (Zero Download, Recommended)
+
+Run this wallpaper in Lively Wallpaper directly from the web without downloading any files:
+
 1. Open **Lively Wallpaper**.
-2. Click the **+ Add Wallpaper** button.
-3. Select **Choose a file** and point to `LivelyInfo.json` (or drag and drop this entire folder into the Lively window).
-4. Right-click the wallpaper in your Lively library and select **Customize** to adjust settings.
+2. Click **+ Add Wallpaper**.
+3. Paste either URL into the **Enter URL** field:
+   ```text
+   https://hieucutevl2.github.io/BA_Memorial_Lobby/
+   ```
+   *(Mirror: `https://hieucutevl.xyz`)*
+4. Click the arrow button to confirm.
+5. Use the on-screen menu buttons on the right edge (gear and student icons) to switch students, change FPS, and adjust interaction settings.
 
-### 2. In Any Web Browser (Local)
-Run any local static server inside this directory:
+### Method 2: Local Package (Full Windows Tray Integration)
+
+1. Download or clone this repository to your computer.
+2. Open **Lively Wallpaper**.
+3. Click **+ Add Wallpaper**.
+4. Click **Choose a file** and select `LivelyInfo.json` (or drag and drop the folder into Lively).
+5. Right-click the wallpaper in your Lively library and select **Customize** to adjust settings directly from the Windows tray.
+
+### Method 3: Run in Web Browser
+
+Run any local static server from this directory:
 
 ```bash
 # Python 3
@@ -38,33 +55,43 @@ npx serve .
 
 Open `http://localhost:8080` in your browser.
 
-### 3. Deploy to Web (GitHub Pages / Cloudflare Pages / cPanel)
-Upload all files in this repository to any static web hosting service:
-- **GitHub Pages**: Go to Settings → Pages → Deploy from branch (`main`).
-- **Cloudflare Pages**: Connect your repo or upload files directly for instant global CDN hosting.
-- **cPanel / Web Hosting**: Upload all files to `public_html/`. Make sure HTTPS/SSL is enabled.
+## Controls
 
----
+- **Steer Gaze**: Click and hold anywhere to make the character look towards your cursor.
+- **Headpat**: Click or drag on the character's head or hair.
+- **Cheek Pinch**: Click and drag on cheeks for stretch and poke reactions (supported students).
+- **Talk Reaction**: Click on the body or background to trigger voice expressions and body animations.
+- **Student Board**: Hover over the options button on the right edge and click the student board icon.
+- **Settings Menu**: Click the gear button on the right edge to adjust interaction mode and frame rate (60 / 30 / 24 FPS).
+- **Keyboard Shortcut**: Press `Escape` to close any open modal or dropdown.
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
-├── index.html              # Main web application & UI modals
-├── LivelyInfo.json         # Lively Wallpaper metadata and pause hooks
+├── index.html              # Main web page and UI modals
+├── LivelyInfo.json         # Lively Wallpaper metadata and playback pause hooks
 ├── LivelyProperties.json   # Lively Wallpaper customize panel settings
-├── README.md               # Documentation
+├── README.md               # English documentation
+├── README.vi.md            # Vietnamese documentation
+├── LICENSE                 # License and third-party notices
 ├── js/
-│   ├── main.js             # Core animation loop, Spine controllers, physics & IPC
-│   └── students.js         # Comprehensive 280+ student dataset
+│   ├── main.js             # Core animation loop, Spine controllers, physics, and Lively IPC
+│   └── students.js         # Comprehensive 280+ student and alt dataset
 └── vendor/
-    ├── pixi.min.js          # Bundled PixiJS v7.4.3 runtime
+    ├── pixi.min.js          # Bundled PixiJS v7 runtime
     └── spine-pixi-v7.min.js # Bundled Spine Pixi runtime
 ```
 
----
+## Credits and Acknowledgements
 
-## 📜 Credits & Disclaimers
+- **Joe ([ba-tools](https://github.com/joexyz/ba-tools))**: Memorial Lobby renderer architecture, touch zone physics, and interaction design.
+- **AronaBot / Nimblebun ([aronabot.cdn.nimblebun.works](https://aronabot.cdn.nimblebun.works))**: Memorial Lobby manifests, skeleton models, and asset CDN hosting.
+- **SchaleDB**: Student database and game data references.
+- **NEXON Games Co., Ltd. & Yostar, Inc.**: Blue Archive characters, art, and assets.
+- **PixiJS & Esoteric Software**: WebGL rendering library and Spine runtime.
 
-- Character art, animations, and sound assets belong to **NEXON Games Co., Ltd.** & **Yostar, Inc.**
-- Assets served via community CDN.
-- Powered by [PixiJS](https://pixijs.com/) (MIT License) and [Esoteric Software Spine Runtime](http://esotericsoftware.com/).
+## Disclaimer and License
+
+This is an unofficial, non-commercial fan project. Game assets, characters, and trademarks belong to **NEXON Games Co., Ltd.** and **Yostar, Inc.**
+
+Source code is released under the [MIT License](LICENSE). Third-party libraries retain their respective licenses.
