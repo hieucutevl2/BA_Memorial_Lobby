@@ -4,6 +4,7 @@
 [![Tiếng Việt](https://img.shields.io/badge/README-Ti%E1%BA%BFng_Vi%E1%BB%87t-yellow?style=for-the-badge)](README.vi.md)
 
 [![My_wallpaper](https://github.com/hieucutevl2/BA_Memorial_Lobby/blob/main/image.png?raw=true)](https://hieucutevl.xyz)
+[![My_wallpaper](https://github.com/hieucutevl2/BA_Memorial_Lobby/blob/main/gif.gif?raw=true)](https://hieucutevl.xyz)
 
 Interactive 2D live wallpaper featuring over 280 Blue Archive students and variants. Built with PixiJS and Spine WebGL for Lively Wallpaper on Windows and modern web browsers.
 

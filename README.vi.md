@@ -4,6 +4,7 @@
 [![Tiếng Việt](https://img.shields.io/badge/README-Ti%E1%BA%BFng_Vi%E1%BB%87t-yellow?style=for-the-badge)](README.vi.md)
 
 [![My_wallpaper](https://github.com/hieucutevl2/BA_Memorial_Lobby/blob/main/image.png?raw=true)](https://hieucutevl.xyz)
+[![My_wallpaper](https://github.com/hieucutevl2/BA_Memorial_Lobby/blob/main/gif.gif?raw=true)](https://hieucutevl.xyz)
 
 Hình nền động 2D tương tác với hơn 280 học sinh Blue Archive và các trang phục biến thể. Xây dựng bằng PixiJS và Spine WebGL, tối ưu cho Lively Wallpaper trên Windows cũng như các trình duyệt web hiện đại.
 
