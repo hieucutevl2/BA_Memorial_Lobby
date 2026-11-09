@@ -182,6 +182,133 @@ function initApp() {
   loadStudentLobby(settings.studentId);
 }
 
+// sRGB -> linear lookup table for 8-bit channels.
+const SRGB_TO_LINEAR = new Uint8ClampedArray(256).map((_, i) => {
+  const c = i / 255;
+  const linear = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  return Math.round(linear * 255);
+});
+
+// zIndex steps between a skeleton's render queue layers (more than its slots).
+const LAYER_Z = 100000;
+
+/**
+ * Light overlays (additive slots) are meant to be blended in linear color
+ * space, as the game does. Blended in sRGB, the way the browser does, even a
+ * dim full-screen glow pushes an already bright scene to white. Pointing additive
+ * attachments at a copy of their atlas page with linearized colors makes each glow
+ * add roughly what it adds in-game, while the rest of the art is untouched.
+ */
+function linearizeAdditiveAttachments(skeletonData, images) {
+  const linearPages = new Map();
+
+  const linearPage = (page) => {
+    const cached = linearPages.get(page);
+    if (cached) return cached;
+
+    const image = images.get(page);
+    if (!image) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth || image.width;
+    canvas.height = image.naturalHeight || image.height;
+
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return null;
+
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    const { data } = pixels;
+
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = SRGB_TO_LINEAR[data[i]];
+      data[i + 1] = SRGB_TO_LINEAR[data[i + 1]];
+      data[i + 2] = SRGB_TO_LINEAR[data[i + 2]];
+    }
+
+    context.putImageData(pixels, 0, 0);
+
+    const baseTexture = PIXI.BaseTexture.from(canvas, {
+      alphaMode: page.pma ? PIXI.ALPHA_MODES.PMA : PIXI.ALPHA_MODES.UNPACK,
+    });
+    activeBaseTextures.push(baseTexture);
+
+    const texture = spine.SpineTexture.from(baseTexture);
+    linearPages.set(page, texture);
+    return texture;
+  };
+
+  for (const skin of skeletonData.skins) {
+    for (const { slotIndex, attachment } of skin.getAttachments()) {
+      if (skeletonData.slots[slotIndex].blendMode !== spine.BlendMode.Additive) {
+        continue;
+      }
+
+      if (
+        !(attachment instanceof spine.RegionAttachment) &&
+        !(attachment instanceof spine.MeshAttachment)
+      ) {
+        continue;
+      }
+
+      const region = attachment.region;
+      if (!(region instanceof spine.TextureAtlasRegion)) {
+        continue;
+      }
+
+      const texture = linearPage(region.page);
+      if (!texture) {
+        continue;
+      }
+
+      // Regions can be shared with normally blended attachments, so give
+      // this attachment its own copy pointing at the linear page.
+      const copy = Object.assign(
+        Object.create(Object.getPrototypeOf(region)),
+        region
+      );
+
+      copy.texture = texture;
+      attachment.region = copy;
+    }
+  }
+}
+
+/**
+ * Draws a skeleton's atlas pages apart by their render queues, as the game
+ * does: every slot of a lower-queue page (the background) before any of a
+ * higher one (the character), whatever the draw order says.
+ */
+function drawInLayers(spineInstance, pageQueues, layers) {
+  const sortedLayers = [...layers].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const layerOf = new Map(sortedLayers.map((l, i) => [l.queue, i]));
+  const internals = spineInstance;
+  const renderMeshes = internals.renderMeshes.bind(spineInstance);
+
+  internals.renderMeshes = () => {
+    renderMeshes();
+
+    for (const [slot, mesh] of internals.meshesCache) {
+      if (mesh.zIndex < 0) continue;
+
+      const attachment = slot.getAttachment();
+      const region =
+        attachment instanceof spine.RegionAttachment ||
+        attachment instanceof spine.MeshAttachment
+          ? attachment.region
+          : null;
+
+      const page =
+        region instanceof spine.TextureAtlasRegion ? region.page.name : undefined;
+
+      const queue = page === undefined ? undefined : pageQueues[page];
+
+      mesh.zIndex +=
+        (queue === undefined ? 0 : (layerOf.get(queue) ?? 0)) * LAYER_Z;
+    }
+  };
+}
+
 // 2. Load Memorial Lobby
 async function loadStudentLobby(studentId) {
   const token = ++loadToken;
@@ -272,7 +399,7 @@ async function loadStudentLobby(studentId) {
 
     const sorted = [...lobby.skeletons].sort((a, b) => {
       const isBg = (s) => s.role === "scene" || s.role === "background" || /scene|bg/i.test(s.skel);
-      return (isBg(a) ? 0 : 1) - (isBg(b) ? 0 : 1);
+      return (a.order ?? (isBg(a) ? 0 : 1)) - (b.order ?? (isBg(b) ? 0 : 1));
     });
 
     for (const skelConfig of sorted) {
@@ -286,6 +413,7 @@ async function loadStudentLobby(studentId) {
       if (isStale()) return;
 
       const atlas = new spine.TextureAtlas(atlasText);
+      const images = new Map();
 
       await Promise.all(
         atlas.pages.map(async (page) => {
@@ -297,6 +425,7 @@ async function loadStudentLobby(studentId) {
             img.onerror = () => rej(new Error(`Failed to load ${textureUrl}`));
             img.src = textureUrl;
           });
+          images.set(page, img);
 
           const baseTexture = PIXI.BaseTexture.from(img, {
             alphaMode: page.pma ? PIXI.ALPHA_MODES.PMA : PIXI.ALPHA_MODES.UNPACK,
@@ -310,6 +439,7 @@ async function loadStudentLobby(studentId) {
       const attachmentLoader = new spine.AtlasAttachmentLoader(atlas);
       const binary = new spine.SkeletonBinary(attachmentLoader);
       const skeletonData = binary.readSkeletonData(new Uint8Array(skelBuffer));
+      linearizeAdditiveAttachments(skeletonData, images);
 
       const spineInstance = new spine.Spine({
         skeletonData,
@@ -317,6 +447,10 @@ async function loadStudentLobby(studentId) {
       });
 
       spineInstance.state.data.defaultMix = 0.25;
+
+      if (skelConfig.layers && skelConfig.pageQueues) {
+        drawInLayers(spineInstance, skelConfig.pageQueues, skelConfig.layers);
+      }
 
       const isMain =
         skelConfig.role === "character" ||
